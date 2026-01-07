@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Windows Secure Chat</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+        .btn { padding: 10px 20px; background: #0078d4; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        .btn:hover { background: #005a9e; }
+        .msg-box { height: 300px; border: 1px solid #ccc; overflow-y: scroll; margin: 10px 0; padding: 10px; background: #fafafa; }
+        .msg { padding: 8px 12px; margin: 5px 0; border-radius: 15px; width: fit-content; max-width: 80%; }
+        .remote { background: #e4e6eb; color: black; float: left; clear: both; }
+        .self { background: #0078d4; color: white; float: right; clear: both; }
+        input { padding: 10px; width: 70%; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🔐 Secure Chat (RSA)</h2>
+
+    <div id="login">
+        <input type="text" id="username" placeholder="Your Name">
+        <button class="btn" onclick="joinChat()">Join Chat</button>
+        <p id="status" style="color: grey; font-size: 0.9em; margin-top: 5px;"></p>
+    </div>
+
+    <div id="chat" class="hidden">
+        <h3>Online Users:</h3>
+        <div id="user-list"></div>
+        <hr>
+        <h4 id="chat-target">Select a user...</h4>
+        <div id="messages" class="msg-box"></div>
+        
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="msgInput" placeholder="Type a message...">
+            <button class="btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const socket = io();
+    const crypt = new JSEncrypt({ default_key_size: 1024 });
+    let privateKey, publicKey;
+    let users = {};
+    let selectedUser = null;
+
+    function joinChat() {
+        const username = document.getElementById('username').value;
+        if (!username) return alert("Name required");
+        
+        document.getElementById('status').innerText = "Generating Encryption Keys...";
+        
+        // Small delay to allow UI to update before heavy math
+        setTimeout(() => {
+            crypt.getKey();
+            publicKey = crypt.getPublicKey();
+            privateKey = crypt.getPrivateKey();
+            
+            socket.emit('join', { username, publicKey });
+            
+            document.getElementById('login').classList.add('hidden');
+            document.getElementById('chat').classList.remove('hidden');
+        }, 100);
+    }
+
+    function selectUser(id) {
+        selectedUser = id;
+        document.getElementById('chat-target').innerText = "Chatting with: " + users[id].username;
+        document.getElementById('messages').innerHTML = ''; // Clear for demo
+    }
+
+    function sendMessage() {
+        if (!selectedUser) return alert("Select a user first!");
+        const text = document.getElementById('msgInput').value;
+        if(!text) return;
+
+        // 1. Encrypt with Recipient's Public Key
+        const encryptor = new JSEncrypt();
+        encryptor.setPublicKey(users[selectedUser].publicKey);
+        const encrypted = encryptor.encrypt(text);
+
+        if (!encrypted) return alert("Message too long for RSA key size.");
+
+        socket.emit('send_message', { targetId: selectedUser, encryptedMessage: encrypted });
+        
+        // Show our own message
+        addMessage(text, 'self');
+        document.getElementById('msgInput').value = '';
+    }
+
+    function addMessage(text, type) {
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        div.innerText = text;
+        document.getElementById('messages').appendChild(div);
+    }
+
+    // Socket Events
+    socket.on('existing_users', (list) => { users = list; renderUsers(); });
+    socket.on('user_joined', (data) => { users[data.id] = data; renderUsers(); });
+    socket.on('user_left', (id) => { delete users[id]; renderUsers(); });
+
+    socket.on('receive_message', (data) => {
+        // 2. Decrypt with Our Private Key
+        const decryptor = new JSEncrypt();
+        decryptor.setPrivateKey(privateKey);
+        const decrypted = decryptor.decrypt(data.encryptedMessage);
+        
+        const senderName = users[data.senderId] ? users[data.senderId].username : "Unknown";
+        addMessage(`${senderName}: ${decrypted || "Error Decrypting"}`, 'remote');
+    });
+
+    function renderUsers() {
+        const div = document.getElementById('user-list');
+        div.innerHTML = '';
+        for (let id in users) {
+            if (id === socket.id) continue;
+            const btn = document.createElement('button');
+            btn.innerText = users[id].username;
+            btn.className = 'btn';
+            btn.style.margin = '2px';
+            btn.style.background = '#666';
+            btn.onclick = () => selectUser(id);
+            div.appendChild(btn);
+        }
+    }
+</script>
+</body>
+</html>
