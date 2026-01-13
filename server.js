@@ -5,7 +5,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve frontend files from "public" folder
+
 app.use(express.static('public'));
 
 // Store users: { socketId: { username, publicKey } }
