@@ -14,7 +14,7 @@ let users = {};
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
-    // 1. User joins -> Save Public Key -> Broadcast to others
+    
     socket.on('join', (data) => {
         const { username, publicKey } = data;
         users[socket.id] = { username, publicKey };
