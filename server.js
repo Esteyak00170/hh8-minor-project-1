@@ -8,7 +8,7 @@ const io = new Server(server);
 
 app.use(express.static('public'));
 
-// Store users: { socketId: { username, publicKey } }
+
 let users = {};
 
 io.on('connection', (socket) => {
