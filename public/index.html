@@ -80,7 +80,7 @@
         const text = document.getElementById('msgInput').value;
         if(!text) return;
 
-        // 1. Encrypt with Recipient's Public Key
+        
         const encryptor = new JSEncrypt();
         encryptor.setPublicKey(users[selectedUser].publicKey);
         const encrypted = encryptor.encrypt(text);
