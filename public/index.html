@@ -101,7 +101,7 @@
         document.getElementById('messages').appendChild(div);
     }
 
-    // Socket Events
+    
     socket.on('existing_users', (list) => { users = list; renderUsers(); });
     socket.on('user_joined', (data) => { users[data.id] = data; renderUsers(); });
     socket.on('user_left', (id) => { delete users[id]; renderUsers(); });
