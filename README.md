@@ -13,7 +13,7 @@ This is a real-time chat application that ensures privacy using End-to-End Encry
 ## How to Run the Project
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/YOUR_USERNAME_HERE/hh8-minor-project-1.git](https://github.com/YOUR_USERNAME_HERE/hh8-minor-project-1.git)
+    git clone https://github.com/Esteyak00170/hh8-minor-project-1.git
     ```
 2.  **Navigate to the project directory:**
     ```bash
