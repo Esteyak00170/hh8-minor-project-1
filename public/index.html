@@ -107,7 +107,7 @@
     socket.on('user_left', (id) => { delete users[id]; renderUsers(); });
 
     socket.on('receive_message', (data) => {
-        // 2. Decrypt with Our Private Key
+        
         const decryptor = new JSEncrypt();
         decryptor.setPrivateKey(privateKey);
         const decrypted = decryptor.decrypt(data.encryptedMessage);
