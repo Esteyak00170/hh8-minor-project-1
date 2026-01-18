@@ -56,7 +56,7 @@
         
         document.getElementById('status').innerText = "Generating Encryption Keys...";
         
-        // Small delay to allow UI to update before heavy math
+        
         setTimeout(() => {
             crypt.getKey();
             publicKey = crypt.getPublicKey();
