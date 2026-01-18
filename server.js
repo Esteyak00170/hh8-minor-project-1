@@ -23,7 +23,7 @@ io.on('connection', (socket) => {
         socket.emit('existing_users', users);
     });
 
-    // 2. Relay Encrypted Message
+    
     socket.on('send_message', (data) => {
         const { targetId, encryptedMessage } = data;
         io.to(targetId).emit('receive_message', {
